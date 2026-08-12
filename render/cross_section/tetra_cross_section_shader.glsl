@@ -12,6 +12,16 @@ instance uniform vec4 modelview_basis_w;
 uniform vec4 albedo : source_color;
 uniform sampler3D albedo_texture : hint_default_white, source_color;
 
+// Driven per-material by Sun4D (see project/ramon/Skybox/scripts/sun_4d.gd)
+// via set_shader_parameter() on specific materials it's told to control
+// (Sun4D.mesh_materials) - deliberately NOT a global shader uniform. A
+// global value has no concept of "which scene," so it bled into every other
+// scene's TetraMesh4D materials for as long as a Sun4D was open in any
+// editor tab, active or not. A plain per-material uniform means any scene
+// without its own Sun4D simply keeps this shader's declared default below,
+// untouched by anything happening elsewhere.
+uniform vec3 fake_light_direction = vec3(0.0, 1.0, 0.0);
+
 varying vec3 uvw;
 
 // Maps from an arbitrary edge index to the indices of the vertices in a tetrahedron [a,b,c,d].
@@ -116,5 +126,10 @@ void vertex() {
 
 void fragment() {
 	NORMAL = normalize(NORMAL);
-	ALBEDO = albedo.rgb * texture(albedo_texture, uvw).rgb * ((dot((vec4(NORMAL, 0.0) * INV_VIEW_MATRIX).xyz, vec3(0.0, 1.0, 0.0)) / 2.0) + 0.5);
+	// fake_light_direction's length is intentionally not normalized to 1: it's
+	// scaled by Sun4D's w-fade (0 when the sun has rotated fully out of the
+	// visible 3D slice, 1 when fully in it), so the dot product's own
+	// linearity flattens this toward neutral (0.5) as the fade drops, instead
+	// of needing a second uniform.
+	ALBEDO = albedo.rgb * texture(albedo_texture, uvw).rgb * ((dot((vec4(NORMAL, 0.0) * INV_VIEW_MATRIX).xyz, fake_light_direction) / 2.0) + 0.5);
 }

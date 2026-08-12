@@ -6,11 +6,13 @@
 #if GDEXTENSION
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/viewport.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #elif GODOT_MODULE
 #include "core/object/ref_counted.h"
 #include "core/variant/typed_array.h"
 #include "scene/main/viewport.h"
+#include "scene/resources/3d/world_3d.h"
 #endif
 
 class RenderingEngine4D : public RefCounted {
@@ -59,6 +61,13 @@ public:
 	virtual void setup_for_viewport();
 	virtual void cleanup_for_viewport();
 	virtual void render_frame();
+
+	// Base default is null (e.g. WireframeCanvasRenderingEngine4D has no 3D
+	// world concept at all). CrossSectionRenderingEngine4D overrides this to
+	// expose its private World3D, so callers (e.g. the editor's "4D" tab)
+	// can apply a WorldEnvironment to it without needing engine-internal
+	// access - see cross_section_rendering_engine_4d.h/.cpp.
+	virtual Ref<World3D> get_world_3d() const;
 
 	GDVIRTUAL0RC(String, _get_friendly_name);
 	GDVIRTUAL0R(bool, _prefers_wireframe_meshes);

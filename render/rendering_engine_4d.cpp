@@ -90,6 +90,10 @@ String RenderingEngine4D::get_friendly_name() const {
 	return friendly_name;
 }
 
+Ref<World3D> RenderingEngine4D::get_world_3d() const {
+	return Ref<World3D>();
+}
+
 void RenderingEngine4D::setup_for_viewport_if_needed(Viewport *p_for_viewport) {
 	_viewport = p_for_viewport;
 	if (_setup_viewports.has(p_for_viewport)) {
@@ -142,6 +146,8 @@ void RenderingEngine4D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_mesh_relative_positions"), &RenderingEngine4D::get_mesh_relative_positions);
 	ClassDB::bind_method(D_METHOD("set_mesh_relative_positions", "mesh_relative_positions"), &RenderingEngine4D::set_mesh_relative_positions);
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "mesh_relative_positions"), "set_mesh_relative_positions", "get_mesh_relative_positions");
+
+	ClassDB::bind_method(D_METHOD("get_world_3d"), &RenderingEngine4D::get_world_3d);
 
 	GDVIRTUAL_BIND(_get_friendly_name);
 	GDVIRTUAL_BIND(_prefers_wireframe_meshes);

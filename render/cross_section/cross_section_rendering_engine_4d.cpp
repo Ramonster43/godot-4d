@@ -14,10 +14,55 @@
 #endif
 #endif
 
+#if GODOT_MODULE && defined(TOOLS_ENABLED)
+#include "core/config/engine.h"
+#include "editor/editor_interface.h"
+#include "scene/3d/world_environment.h"
+
+WorldEnvironment *CrossSectionRenderingEngine4D::_find_world_environment(Node *p_node) {
+	WorldEnvironment *world_env = Object::cast_to<WorldEnvironment>(p_node);
+	if (world_env != nullptr) {
+		return world_env;
+	}
+	for (int i = 0; i < p_node->get_child_count(); i++) {
+		WorldEnvironment *found = _find_world_environment(p_node->get_child(i));
+		if (found != nullptr) {
+			return found;
+		}
+	}
+	return nullptr;
+}
+
+void CrossSectionRenderingEngine4D::_sync_editor_world_environment() {
+	if (!Engine::get_singleton()->is_editor_hint() || !_cross_section_world_3d.is_valid()) {
+		return;
+	}
+	// Always assign explicitly, including a null Ref<Environment> when the
+	// currently-edited scene has no WorldEnvironment - this previously only
+	// ever set an environment when one was found, so switching to view a
+	// scene with none left whatever a PREVIOUSLY viewed scene's
+	// WorldEnvironment had applied still active. Every frame this should
+	// exactly mirror what's actually in the scene being looked at right now,
+	// nothing carried over from elsewhere.
+	Node *edited_scene_root = EditorInterface::get_singleton()->get_edited_scene_root();
+	Ref<Environment> environment;
+	if (edited_scene_root != nullptr) {
+		WorldEnvironment *world_env = _find_world_environment(edited_scene_root);
+		if (world_env != nullptr) {
+			environment = world_env->get_environment();
+		}
+	}
+	_cross_section_world_3d->set_environment(environment);
+}
+#endif
+
 void CrossSectionRenderingEngine4D::render_frame() {
 	ERR_FAIL_NULL(RenderingServer::get_singleton());
 	ERR_FAIL_NULL(get_camera());
 	ERR_FAIL_NULL(get_viewport());
+#if GODOT_MODULE && defined(TOOLS_ENABLED)
+	_sync_editor_world_environment();
+#endif
 	_current_pass++;
 	update_camera();
 	// Maps global to cameral-local, aka world space to view space.
